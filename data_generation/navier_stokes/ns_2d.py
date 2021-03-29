@@ -129,9 +129,9 @@ if '--test' in sys.argv:
 	s = 16
 	sub = 1
 	#Number of solutions to generate
-	N = 1
+	N = 4
 	#Batch size
-	bsize = 1
+	bsize = 4
 else:
 	#Resolution
 	s = 256

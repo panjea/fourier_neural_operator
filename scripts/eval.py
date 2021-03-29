@@ -137,15 +137,24 @@ t1 = default_timer()
 
 #TEST_PATH = 'data/ns_data_V1e-4_N20_T50_R256test.mat'
 ## note: run ./ns_2d.py to generate this file
-TEST_PATH = '../data_generation/ns_data.mat'
+TEST_PATH = os.path.abspath('../data_generation/navier_stokes/ns_data.mat')
+print(TEST_PATH)
+assert os.path.isfile(TEST_PATH)
+if '--test' in sys.argv:
+	ntest = 4
+	sub = 4
+	sub_t = 4
+	S = 4  ## test res size is 16
+	T_in = 2
+	T = 4
 
-ntest = 20
-
-sub = 4
-sub_t = 4
-S = 64
-T_in = 10
-T = 20
+else:
+	ntest = 20
+	sub = 4
+	sub_t = 4
+	S = 64 ## full res size is 256
+	T_in = 10
+	T = 20
 
 indent = 3
 
@@ -178,12 +187,19 @@ if '--cuda' in sys.argv:
 	device = torch.device('cuda')
 else:
 	device = torch.device('cpu')
+print(device)
 
 # load model
+MODEL_PATH = 'model/ns_fourier_V1e-4_T20_N9800_ep200_m12_w32'
 if os.path.isfile(os.path.expanduser('~/Downloads/ns_fourier_V1e-4_T20_N9800_ep200_m12_w32')):
-	model = torch.load(os.path.expanduser('~/Downloads/ns_fourier_V1e-4_T20_N9800_ep200_m12_w32'))
+	MODEL_PATH = os.path.expanduser('~/Downloads/ns_fourier_V1e-4_T20_N9800_ep200_m12_w32')
+
+if '--cuda' in sys.argv:
+	model = torch.load(MODEL_PATH)
 else:
-	model = torch.load('model/ns_fourier_V1e-4_T20_N9800_ep200_m12_w32')
+	model = torch.load(MODEL_PATH, map_location=device)
+
+
 
 print(model.count_params())
 
@@ -195,7 +211,10 @@ index = 0
 with torch.no_grad():
 	test_l2 = 0
 	for x, y in test_loader:
-		x, y = x.cuda(), y.cuda()
+		if '--cuda' in sys.argv:
+			x, y = x.cuda(), y.cuda()
+		else:
+			x, y = x.cpu(), y.cpu()
 
 		out = model(x)
 		pred[index] = out
